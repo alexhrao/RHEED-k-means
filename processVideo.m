@@ -44,6 +44,7 @@ if size(image, 3) == 3
 else
     bwimage = image;
 end
+mkdir(fpath, vname);
 coordPath = [fpath,vname,'/',vname,'_coords.txt'];
 
 if isfile(coordPath)
@@ -60,6 +61,12 @@ else
     fig = figure('Name', 'Select the RHEED Area');
     imshow(bwimage);
     rect = drawrectangle('Rotatable', false);
+    while isempty(rect.Position)
+        close(fig);
+        fig = figure('Name', 'Select the RHEED Area');
+        imshow(bwimage);
+        rect = drawrectangle('Rotatable', false);
+    end
     x1 = ceil(rect.Position(1));
     y1 = ceil(rect.Position(2));
     x2 = floor(rect.Position(1) + rect.Position(3));
@@ -69,6 +76,12 @@ else
     fig = figure('Name', 'Select the Central Peak');
     imshow(peakImg);
     rect = drawrectangle('Rotatable', false);
+    while isempty(rect.Position)
+        close(fig);
+        fig = figure('Name', 'Select the Central Peak');
+        imshow(peakImg);
+        rect = drawrectangle('Rotatable', false);
+    end
     cx1 = ceil(rect.Position(1));
     cy1 = ceil(rect.Position(2));
     cx2 = floor(rect.Position(1) + rect.Position(3));
@@ -79,7 +92,6 @@ else
     fclose(fid);
 end
 innerCoords = [cx1 cx2 cy1 cy2];
-
 % Get the boundaries of the image to crop. Ignore the last 20 pixels as that is
 % the scroll window and not part of the RHEED screen.
 %[x1, x2, y1, y2] = getWindow(bwimage, XWindowSize, YWindowSize);

@@ -7,7 +7,6 @@ vidDirs(1:2) = [];
 vidDirsInfo = vidDirs([vidDirs.isdir]);
 vidDirs = fullfile({vidDirsInfo.folder}, {vidDirsInfo.name});
 wState = warning('off');
-vidDirs(1) = [];
 for d = 1:length(vidDirs)
     vidsInfo = dir(vidDirs{d});
     vidsInfo(~endsWith({vidsInfo.name}, '.avi', 'IgnoreCase', true)) = [];
@@ -36,7 +35,6 @@ for d = 1:length(vidDirs)
             fprintf(2, 'Failed!\n');
         end
         diary off;
-        clc;
     end
 end
 warning(wState);

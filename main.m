@@ -42,9 +42,8 @@ mkdir(video_directory,'k-means');
 output_directory = [video_directory,'k-means\'];
 
 % Run PCA and k-means clustering.
-for d = 2:D
-    kmeans(run, video_directory, output_directory, innerCoords, fps, d, NUM_CLUSTERS);
-end
+kmeans(run, video_directory, output_directory, innerCoords, fps, D, NUM_CLUSTERS);
+
 
 % Plot the PCA and k-means data
 analyzeKMeans(run, output_directory, fps, SAVEAS, displayImages);
