@@ -144,7 +144,7 @@ else
         % Crop the image based on the parameters determined from the first frame.
         img = bwimage(y1:y2,x1:x2);
         % Save the image to file as a bitmap
-        imwrite(img, [fpath,'/',vname,'_',num2str(i,str_format),'.bmp']);
+        imwrite(img, [fpath,vname, '/',vname,'_',num2str(i,str_format),'.bmp']);
     end
     toc(ts)
 end
