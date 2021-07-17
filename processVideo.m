@@ -99,7 +99,7 @@ innerCoords = [cx1 cx2 cy1 cy2];
 tic;
 %img = bwimage(y1:y2,x1:x2);
 %[im_height,im_width] = size(img);
-
+return
 % Make a new directory for the processed images named after the filename and
 % save the image to the directory
 mkdir(fpath, vname);
@@ -136,7 +136,7 @@ else
     ts = tic;
     for i = 1:numFrames
         image = info.readFrame;
-        image = imrotate(image, -24.5, 'nearest', 'crop');
+        %image = imrotate(image, -24.5, 'nearest', 'crop');
         if size(image, 3) == 3
             bwimage = rgb2gray(image);
         else

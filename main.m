@@ -15,7 +15,7 @@ function main(videoPath)
 % YWindowSize = 320;                         % in pixels (default = 160)
 % cropImageAtTime = 10;                      % in seconds (default = 10)
 
-D = 5;                 % The reduced dimension of the problem after running PCA.
+D = 10;                 % The reduced dimension of the problem after running PCA.
 NUM_CLUSTERS = 5;      % The maximum number of clusters k-means will run
 
 SAVEAS = 'sample';     % The name of the output plots when they are

@@ -92,156 +92,158 @@ end
 fprintf('Done Loading Processed Images.\n');
 
 %% =================== PRINCIPLE COMPONENT ANALYSIS ======================= %%
-fprintf('\nPerforming principle component analysis.\n');
-% Normalize the features
-[X_norm, mu, sigma] = featureNormalize(X);
-% Choose the dimensions of the new problem.
+for D = D:D
+    fprintf('\nPerforming principle component analysis.\n');
+    % Normalize the features
+    [X_norm, mu, sigma] = featureNormalize(X);
+    % Choose the dimensions of the new problem.
 
-% Run PCA
-tStart = tic;
-[U, S] = pca(X_norm,D);
-tElapsed = toc(tStart);
-fprintf(['Time Elapsed: ' num2str(tElapsed) ' seconds.\n']);
+    % Run PCA
+    tStart = tic;
+    [U, S] = pca(X_norm,D);
+    tElapsed = toc(tStart);
+    fprintf(['Time Elapsed: ' num2str(tElapsed) ' seconds.\n']);
 
-% Visualize the first D eigenvectors
-% Re-pad the columns with pixels that are 0.
-U_disp = repadData(U', ind_zero_col);
+    % Visualize the first D eigenvectors
+    % Re-pad the columns with pixels that are 0.
+    U_disp = repadData(U', ind_zero_col);
 
-% Project the data into a reduced number of dimesions using the first x
-% eigenvectors of U
-Z = projectData(X_norm, U, D);
+    % Project the data into a reduced number of dimesions using the first x
+    % eigenvectors of U
+    Z = projectData(X_norm, U, D);
 
-% Display the eigenvectors and plot the eigenvalues as a time series and save to
-% file.
-fVecs = figure('Position', [50 0 (2*im_width + 30) (1.5 * im_height * D + 30)]);
-fVals = figure('Position', [50 0 (2*im_width + 30) (im_height * D + 30)]);
-fFft = figure();
-time = linspace(0,size(Z,1)/fps,size(Z,1));
-maxZ = max(Z, [], 'all');
-minZ = min(Z, [], 'all');
-ag = ag(:);
+    % Display the eigenvectors and plot the eigenvalues as a time series and save to
+    % file.
+    fVecs = figure('Position', [50 0 (2*im_width + 30) (1.5 * im_height * D + 30)]);
+    fVals = figure('Position', [50 0 (2*im_width + 30) (im_height * D + 30)]);
+    fFft = figure();
+    time = linspace(0,size(Z,1)/fps,size(Z,1));
+    maxZ = max(Z, [], 'all');
+    minZ = min(Z, [], 'all');
+    ag = ag(:);
 
-Y = fft(ag);
-L = floor(length(ag)/2) * 2;
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-% guess 30 FPS? could pump in i suppose
-Fs = 30;
-f = Fs*(0:(L/2)) / L;
-plot(f,P1);
-title('Single-Sided Amplitude Spectrum of X(t)');
-xlabel('f (Hz)');
-ylabel('|P1(f)|');
-saveas(fFft, [write_dir 'FFT.fig']);
-saveas(fFft, [write_dir 'FFT.jpg']);
+    Y = fft(ag);
+    L = floor(length(ag)/2) * 2;
+    P2 = abs(Y/L);
+    P1 = P2(1:L/2+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    % guess 30 FPS? could pump in i suppose
+    Fs = 30;
+    f = Fs*(0:(L/2)) / L;
+    plot(f,P1);
+    title('Single-Sided Amplitude Spectrum of X(t)');
+    xlabel('f (Hz)');
+    ylabel('|P1(f)|');
+    saveas(fFft, [write_dir sprintf('FFT_D%d.fig', D)]);
+    saveas(fFft, [write_dir sprintf('FFT_D%d.jpg', D)]);
 
-fComb = figure('Position', [50 0 (4*im_width + 30) (im_height + 30)]);
-ag_range = max(ag) - min(ag);
-ag_norm = minZ + ((ag - min(ag)) .* ((maxZ - minZ) ./ ag_range)); 
-plot(time', Z, time, ag_norm);
-compNames = cell(1, D);
-for d = 1:D
-    compNames{d} = sprintf('Component %d', d);
+    fComb = figure('Position', [50 0 (4*im_width + 30) (im_height + 30)]);
+    ag_range = max(ag) - min(ag);
+    ag_norm = minZ + ((ag - min(ag)) .* ((maxZ - minZ) ./ ag_range)); 
+    plot(time', Z, time, ag_norm);
+    compNames = cell(1, D);
+    for d = 1:D
+        compNames{d} = sprintf('Component %d', d);
+    end
+    legend(compNames{:}, 'Average RHEED Intensity (Normalized)');
+    title(['Combined Eigenvalues for ' runName]);
+    saveas(fComb, [write_dir sprintf('Eigenvalues_combined_D%d.fig', D)]);
+    saveas(fComb, [write_dir sprintf('Eigenvalues_combined_D%d.jpeg', D)]);
+    xlPayload = [{'Time (s)'}, compNames, {'Average RHEED Intensity', 'Average RHEED Intensity (Normalized)'}; ...
+        [num2cell(time'), num2cell(Z(:, 1:D)), num2cell(ag), num2cell(ag_norm)]];
+    writecell(xlPayload, [write_dir, 'Eigenvalue_D' num2str(D) '_' runName '.xlsx']);
+    for i = 1:D
+        % Plot eigenvectors to single plot
+        figure(fVecs);
+        subplot(D, 1, i);
+        displayImage(U_disp(i,:), im_height, im_width);
+        axis equal;
+        title(['Eigenvector' num2str(i) ' for ' runName]);
+
+        % Individually plot the eigenvectors
+        fVec = figure();
+        displayImage(U_disp(i,:), im_height, im_width);
+        axis equal;
+        title(['Eigenvector' num2str(i)]);
+        saveas(fVec, sprintf('%sEigenvector_D%d_i%d.jpeg', write_dir, D, i));
+        hgsave(fVec, sprintf('%sEigenvector_D%d_i%d.ofig', write_dir, D, i));
+        saveas(fVec, sprintf('%sEigenvector_D%d_i%d.fig', write_dir, D, i));
+
+        % Plot the eigenvalues to a single plot
+        figure(fComb);
+        figure(fVals);
+        subplot(D, 1, i);
+        plot(time, Z(:,i), 'or', 'MarkerSize', 1);
+        axis([0 time(end) min(Z(:,i)) max(Z(:,i))]);
+        xlabel('Time (s)');
+        ylabel('Response (a.u.)');
+        title(['Component ' num2str(i) ' for ' runName]);
+
+        % Individually plot the eigenvalues as a function of time
+        fVal = figure();
+        plot(time,Z(:,i), 'or', 'MarkerSize', 1);
+        axis([0 time(end) min(Z(:,i)) max(Z(:,i))]);
+        title(['Component ' num2str(i) ' for ' runName]);
+        xlabel('Time (s)');
+        ylabel('Response (a.u.)');
+        saveas(fVal, sprintf('%sEigenvalue_D%d_i%d.jpeg', write_dir, D, i));
+        saveas(fVal, sprintf('%sEigenvalue_D%d_i%d.fig', write_dir, D, i));
+    end
+
+    % Save the composite images to file.
+    saveas(fVecs, [write_dir sprintf('Eigenvectors_D%d.jpg', D)]);
+    saveas(fVals, [write_dir sprintf('Eigenvalues_D%d.jpg', D)]);
+    saveas(fVecs, [write_dir sprintf('Eigenvectors_D%d.fig', D)]);
+    saveas(fVals, [write_dir sprintf('Eigenvalues_%Dd.fig', D)]);
+    %print(1, [write_dir, 'Eigenvectors.jpeg']); %, ['-S ', num2str(2*im_width + 30), ...
+    %',' ,num2str(1.5 * im_height * D + 30)]);
+
+    %print(2, [write_dir, 'Eigenvalues.jpeg']);% , ['-S ', num2str(2*im_width + 30), ...
+    %',' ,num2str(im_height * D + 30)]);
+
+
+    % Save the eigenvectors and their visualization to file
+    save([write_dir, 'eigenvectorsD' num2str(D) '.mat'], 'U', 'U_disp', 'D', ...
+        'S', 'Z');
+
+    % Plot the original first image and the recovered first image.
+    X_rec = recoverData(Z, U, D);
+
+    % Calculate the variance retained.
+    variance = calculateVariance(X_rec,X_norm);
+    fprintf('With D = %d, %f%% of the variance is retained.\n', D, variance*100);
+
+    % Un-normalize the recovered image and repad zeros as needed.
+    X_rec = featureDenormalize(X_rec, mu, sigma);
+    X_rec = repadData(X_rec, ind_zero_col);
+
+    % Output PCA data to KMEANS RUN SUMMARY.txt
+    try
+        fid = fopen([write_dir, sprintf('KMEANS RUN SUMMARY_D%d.txt', D)], 'a');
+        fprintf(fid, '\r\nPCA DATA\r\n');
+        fprintf(fid, 'Time to run PCA - %f seconds\r\n', tElapsed);
+        fprintf(fid, 'Reduced dimensions D - %d\r\n', D);
+        fprintf(fid, 'Variance retained - %f\r\n', variance);
+        fprintf(fid, 'Eigenvalues - \r\n');
+        fprintf(fid, '%f\r\n', diag(S));
+        fclose(fid);
+    catch
+        warning('Error in writing run summary to file.\n');
+        fclose(fid);
+    end
+
+    % Create a plot of the original first image vs. the reconstructed image after
+    % PCA
+    fPCA = figure();
+    subplot(2,1,1);
+    displayImage(X(1,:), im_height, im_width);
+    title(['Original Image for ' runName]);
+    subplot(2,1,2);
+    displayImage(X_rec(1,:), im_height, im_width);
+    title(['Recovered Image after PCA for ' runName]);
+    saveas(fPCA, [write_dir, 'Recovered Image_D' num2str(D) '.jpeg']);
+    saveas(fPCA, [write_dir, 'Recovered Image_D' num2str(D) '.fig']);
 end
-legend(compNames{:}, 'Average RHEED Intensity (Normalized)');
-title(['Combined Eigenvalues for ' runName]);
-saveas(fComb, [write_dir 'Eigenvalues_combined.fig']);
-saveas(fComb, [write_dir 'Eigenvalues_combined.jpg']);
-xlPayload = [{'Time (s)'}, compNames, {'Average RHEED Intensity', 'Average RHEED Intensity (Normalized)'}; ...
-    [num2cell(time'), num2cell(Z(:, 1:D)), num2cell(ag), num2cell(ag_norm)]];
-writecell(xlPayload, [write_dir, 'Eigenvalue_' runName '.xlsx']);
-for i = 1:D
-    % Plot eigenvectors to single plot
-    figure(fVecs);
-    subplot(D, 1, i);
-    displayImage(U_disp(i,:), im_height, im_width);
-    axis equal;
-    title(['Eigenvector' num2str(i) ' for ' runName]);
-    
-    % Individually plot the eigenvectors
-    fVec = figure();
-    displayImage(U_disp(i,:), im_height, im_width);
-    axis equal;
-    title(['Eigenvector' num2str(i)]);
-    saveas(fVec, [write_dir, 'Eigenvector', num2str(i), '.jpeg']);
-    hgsave(fVec, [write_dir, 'Eigenvector', num2str(i), '.ofig']);
-    saveas(fVec, [write_dir, 'Eigenvector', num2str(i), '.fig']);
-    
-    % Plot the eigenvalues to a single plot
-    figure(fComb);
-    figure(fVals);
-    subplot(D, 1, i);
-    plot(time, Z(:,i), 'or', 'MarkerSize', 1);
-    axis([0 time(end) min(Z(:,i)) max(Z(:,i))]);
-    xlabel('Time (s)');
-    ylabel('Response (a.u.)');
-    title(['Component ' num2str(i) ' for ' runName]);
-    
-    % Individually plot the eigenvalues as a function of time
-    fVal = figure();
-    plot(time,Z(:,i), 'or', 'MarkerSize', 1);
-    axis([0 time(end) min(Z(:,i)) max(Z(:,i))]);
-    title(['Component ' num2str(i) ' for ' runName]);
-    xlabel('Time (s)');
-    ylabel('Response (a.u.)');
-    saveas(fVal, [write_dir, 'Eigenvalue', num2str(i), '.jpeg']);
-    saveas(fVal, [write_dir, 'Eigenvalue', num2str(i), '.fig']);
-end
-
-% Save the composite images to file.
-saveas(fVecs, [write_dir 'Eigenvectors.jpg']);
-saveas(fVals, [write_dir 'Eigenvalues.jpg']);
-saveas(fVecs, [write_dir 'Eigenvectors.fig']);
-saveas(fVals, [write_dir 'Eigenvalues.fig']);
-%print(1, [write_dir, 'Eigenvectors.jpeg']); %, ['-S ', num2str(2*im_width + 30), ...
-%',' ,num2str(1.5 * im_height * D + 30)]);
-
-%print(2, [write_dir, 'Eigenvalues.jpeg']);% , ['-S ', num2str(2*im_width + 30), ...
-%',' ,num2str(im_height * D + 30)]);
-
-
-% Save the eigenvectors and their visualization to file
-save([write_dir, 'eigenvectors' num2str(D) '.mat'], 'U', 'U_disp', 'D', ...
-    'S', 'Z');
-
-% Plot the original first image and the recovered first image.
-X_rec = recoverData(Z, U, D);
-
-% Calculate the variance retained.
-variance = calculateVariance(X_rec,X_norm);
-fprintf('With D = %d, %f%% of the variance is retained.\n', D, variance*100);
-
-% Un-normalize the recovered image and repad zeros as needed.
-X_rec = featureDenormalize(X_rec, mu, sigma);
-X_rec = repadData(X_rec, ind_zero_col);
-
-% Output PCA data to KMEANS RUN SUMMARY.txt
-try
-    fid = fopen([write_dir, 'KMEANS RUN SUMMARY.txt'], 'a');
-    fprintf(fid, '\r\nPCA DATA\r\n');
-    fprintf(fid, 'Time to run PCA - %f seconds\r\n', tElapsed);
-    fprintf(fid, 'Reduced dimensions D - %d\r\n', D);
-    fprintf(fid, 'Variance retained - %f\r\n', variance);
-    fprintf(fid, 'Eigenvalues - \r\n');
-    fprintf(fid, '%f\r\n', diag(S));
-    fclose(fid);
-catch
-    warning('Error in writing run summary to file.\n');
-    fclose(fid);
-end
-
-% Create a plot of the original first image vs. the reconstructed image after
-% PCA
-fPCA = figure();
-subplot(2,1,1);
-displayImage(X(1,:), im_height, im_width);
-title(['Original Image for ' runName]);
-subplot(2,1,2);
-displayImage(X_rec(1,:), im_height, im_width);
-title(['Recovered Image after PCA for ' runName]);
-saveas(fPCA, [write_dir, 'Recovered Image.jpeg']);
-saveas(fPCA, [write_dir, 'Recovered Image.fig']);
 fprintf('Finished PCA.\n');
 
 %% ======================== K-MEANS CLUSTERING ============================ %%
