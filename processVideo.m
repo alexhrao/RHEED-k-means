@@ -117,7 +117,7 @@ if ~isempty(p)
             frames = vr.read([startInd stopInd]);
             for i = 1:size(frames, 4)
                 image = frames(:, :, :, i);
-                image = imrotate(image, -24.5, 'nearest', 'crop');
+                %image = imrotate(image, -24.5, 'nearest', 'crop');
                 if size(image, 3) == 3
                     bwimage = rgb2gray(image);
                 else
