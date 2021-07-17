@@ -99,7 +99,6 @@ innerCoords = [cx1 cx2 cy1 cy2];
 tic;
 %img = bwimage(y1:y2,x1:x2);
 %[im_height,im_width] = size(img);
-return
 % Make a new directory for the processed images named after the filename and
 % save the image to the directory
 mkdir(fpath, vname);

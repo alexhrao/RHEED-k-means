@@ -2,7 +2,7 @@
 %
 % P = splitSignal('Time', T, 'Values', X will split signal with time vector T and value
 % vector X into periods P. Each period in P is a structure with fields tt
-% for time and xx for value. A default window of 4 seconds is used,
+% for time and xx for value. A default window of 6 seconds is used,
 % defaulting to 30 FPS
 %
 % P = splitSignal('Video', V) will read the video file in path V, and
@@ -10,7 +10,8 @@
 % accordingly. P will have all the fields of before, but will also have a
 % field ff, the frames associated with a given period. If the inner/outer
 % coordinates are not given (see options), then a text file will be looked
-% for in the directory; if that is not found, an error is thrown.
+% for in the directory; if that is not found, an error is thrown. It will
+% also have frames pp which are the peak frames (used to calculate xx).
 %
 % P = splitSignal(___, 'Name', Value) will also process optional arguments:
 %
@@ -19,19 +20,28 @@
 % * 'InnerCoords': The inner coordinates to use
 % * 'OuterCoords': The outer coordinates to use
 %
+%%% Remarks
+%
+% To plot, you could do
+%   periods = splitSignal('Video', 'path'); % or whatever
+%   hold on;
+%   for p = 1:length(periods)
+%       plot(periods(p).tt, periods(p).xx);
+%`  end
 function periods = splitSignal(options)
 arguments
     options.Time double = [];
     options.Values double = [];
-    options.Video char = '';
+    options.Video {mustBeFile};
     options.Window double = 6*30;
     options.InnerCoords double = [];
     options.OuterCoords double = [];
 end
-if isempty(options.Time) && isempty(options.Video)
+if isempty(options.Time) && ~isfield(options.Video)
     error('Must provide data');
 end
-if ~isempty(options.Video)
+if isfield(options.Video)
+    options.Video = char(options.Video);
     reader = VideoReader(options.Video);
     [fpath, vname, ~] = fileparts(options.Video);
     coordPath = [fpath, filesep, vname, filesep ,vname,'_coords.txt'];
@@ -93,8 +103,9 @@ while curr <= length(tt)
     [~, ind] = min(xx(windowMask));
     periods(end+1).tt = tt(curr:curr+ind-1);
     periods(end).xx = xx(curr:curr+ind-1);
-    if ~isempty(options.Video)
+    if isfield(options.Video)
         periods(end).ff = frames(:, :, :, curr:curr+ind-1);
+        periods(end).pp = peaks(:, :, :, curr:curr+ind-1);
     end
     curr = curr + ind + 1;
 end

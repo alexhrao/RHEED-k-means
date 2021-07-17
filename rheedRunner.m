@@ -1,13 +1,21 @@
 %% RHEED Runner
 NUM_CLUSTER = 5;
+% Change to source of videos
+% Videos are organized (with VID_DIR as root)
+% /GROWTH_NAME/SomeAVIFile.avi
+% It can have other files, just has to have the AVI file in it
 VID_DIR = 'F:\Next RHEED Videos\';
+% if you WANT to try parallel, uncomment below
+% gcp;
 
 vidDirs = dir(VID_DIR);
 vidDirs(1:2) = [];
 vidDirsInfo = vidDirs;
 vidDirs = fullfile({vidDirsInfo.folder}, {vidDirsInfo.name});
-%vidDirs(1:3) = [];
 wState = warning('off');
+if ~isfolder('data')
+    mkdir('data');
+end
 for d = 1:length(vidDirs)
     vidsInfo = dir(vidDirs{d});
     vidsInfo(~endsWith({vidsInfo.name}, '.avi', 'IgnoreCase', true)) = [];
@@ -15,7 +23,7 @@ for d = 1:length(vidDirs)
     for v = 1:length(vids)
         close all
         fprintf(1, 'Analyzing Video %s...', vidsInfo(v).name);
-        %try
+        try
             [~, vName, ~] = fileparts(vidsInfo(v).name);
             dst = fullfile('data', [vidDirsInfo(d).name '_' vName]);
             mkdir(dst);
@@ -33,9 +41,9 @@ for d = 1:length(vidDirs)
                 copyfile(fullfile(vidDirs{d}, 'k-means', vName, sprintf('k%d', k)), kDst);
             end
             fprintf(1, 'Done!\n');
-        %catch
-        %    fprintf(2, 'Failed!\n');
-        %end
+        catch
+            fprintf(2, 'Failed!\n');
+        end
         diary off;
     end
 end
