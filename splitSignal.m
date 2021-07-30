@@ -37,10 +37,10 @@ arguments
     options.InnerCoords double = [];
     options.OuterCoords double = [];
 end
-if isempty(options.Time) && ~isfield(options.Video)
+if isempty(options.Time) && ~isfield(options, 'Video')
     error('Must provide data');
 end
-if isfield(options.Video)
+if isfield(options, 'Video')
     options.Video = char(options.Video);
     reader = VideoReader(options.Video);
     [fpath, vname, ~] = fileparts(options.Video);
@@ -103,7 +103,7 @@ while curr <= length(tt)
     [~, ind] = min(xx(windowMask));
     periods(end+1).tt = tt(curr:curr+ind-1);
     periods(end).xx = xx(curr:curr+ind-1);
-    if isfield(options.Video)
+    if isfield(options, 'Video')
         periods(end).ff = frames(:, :, :, curr:curr+ind-1);
         periods(end).pp = peaks(:, :, :, curr:curr+ind-1);
     end
